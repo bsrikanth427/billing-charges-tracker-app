@@ -1,42 +1,61 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { useNavigate } from 'react-router-dom';
 
 const AddOwner = () => {
     const [name, setName] = useState('');
     const [flatNo, setFlatNo] = useState('');
-    const [phoneNo, setPhoneNo] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
+    const [role, setRole] = useState('Owner');
     const [message, setMessage] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const navigate = useNavigate(); // React Router hook for navigation
+
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const newUser = { name, flatNo, phoneNo };
+        if (!/^\d{10}$/.test(phoneNumber)) {
+            setMessage('Please enter a valid 10-digit phone number.');
+            return;
+        }
+
+        if (!flatNo.trim()) {
+            setMessage('Flat number cannot be empty.');
+            return;
+        }
+
+        const newUser = { name, flatNo, phoneNumber, role };
+        setIsSubmitting(true);
 
         try {
             const response = await fetch('http://localhost:9090/api/owners', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(newUser)
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newUser),
             });
 
+            const result = await response.json();
             if (response.ok) {
-                const result = await response.json();
-                setMessage('User added successfully!');
-                console.log('User added:', result);
-
-                // Clear input fields
+                setMessage(result.message);
+                console.log('Owner added:', result.data);
                 setName('');
                 setFlatNo('');
-                setPhoneNo('');
+                setPhoneNumber('');
+
+                // Redirect to the ViewOwners page after success
+                navigate('/ownerslist');
+
             } else {
-                setMessage('Failed to add user.');
-                console.error('Failed to add user:', response.statusText);
+                setMessage(result.data || 'Failed to add owner.');
             }
         } catch (error) {
-            setMessage('An error occurred while adding the user.');
+            setMessage('An error occurred while adding the owner.');
             console.error('Error:', error);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -75,13 +94,25 @@ const AddOwner = () => {
                                 className="form-control"
                                 id="phoneNo"
                                 placeholder="Enter phone number"
-                                value={phoneNo}
-                                onChange={(e) => setPhoneNo(e.target.value)}
+                                value={phoneNumber}
+                                onChange={(e) => setPhoneNumber(e.target.value)}
+                                maxLength="10"
                                 required
                             />
                         </div>
-                        <button type="submit" className="btn btn-primary btn-block mt-4">
-                            Add Owner
+                        <div className="form-group mt-4">
+                            <select
+                                className="form-control"
+                                value={role}
+                                onChange={(e) => setRole(e.target.value)}
+                                required
+                            >
+                                <option value="Owner">Owner</option>
+                                <option value="Tenant">Tenant</option>
+                            </select>
+                        </div>
+                        <button type="submit" className="btn btn-primary btn-block mt-4" disabled={isSubmitting}>
+                            {isSubmitting ? 'Adding...' : 'Add Owner'}
                         </button>
                     </form>
                 </div>
