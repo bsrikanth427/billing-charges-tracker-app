@@ -46,7 +46,7 @@ const AddOwner = () => {
                 setPhoneNumber('');
 
                 // Redirect to the ViewOwners page after success
-                navigate('/ownerslist');
+                navigate('/viewOwners');
 
             } else {
                 setMessage(result.data || 'Failed to add owner.');
