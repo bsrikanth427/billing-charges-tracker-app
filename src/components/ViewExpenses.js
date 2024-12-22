@@ -6,7 +6,8 @@ function ViewExpenses(props) {
     const [expenses, setExpenses] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [owners, setOwners] = useState([]);
-    const initialCorpusFund = 20000; // Initial corpus fund value
+    const [currentCorpusFund, setCurrentCorpusFund] = useState(0);
+    const [previousCorpusFund, setPreviousCorpusFund] = useState(0);
     const location = useLocation();
     // Get state from props or fallback to useLocation
     // location.state?.selectedMonth comes from AddExpenses compinent on saveBtn 
@@ -14,11 +15,13 @@ function ViewExpenses(props) {
     const selectedMonth = props.selectedMonth || location.state?.selectedMonth || "";
     const selectedYear = props.selectedYear || location.state?.selectedYear || "";
     const monthYear = `${selectedMonth}-${selectedYear}`;
+    const availableFundAmount = location.state?.previousMonthCorpusFund;
 
 
     useEffect(() => {
         fetchExpensesByMonth(monthYear);
-    }, [monthYear]);
+
+    }, [monthYear]); // Only depends on monthYear
 
     useEffect(() => {
         fetchOwners();
@@ -35,6 +38,8 @@ function ViewExpenses(props) {
         }
     }
 
+
+
     async function fetchExpensesByMonth(monthYear) {
         console.log("fetching expenses for month-year: " + monthYear);
         setIsLoading(true);
@@ -43,23 +48,31 @@ function ViewExpenses(props) {
             console.log("fetch expenses response: " + JSON.stringify(response.data.data));
             const monthlyExpenses = response.data.data.monthlyExpenses || [];
             setExpenses(monthlyExpenses);
+            console.log("previousMonthCorpusFund  ", response.data.data.previousCorpusFund);
+            setPreviousCorpusFund(response.data.data.previousCorpusFund);
+            console.log("currentMonthCorpusFund  ", response.data.data.currentMonthCorpusFund);
+            setCurrentCorpusFund(response.data.data.currentCorpusFund);
+
         } catch (error) {
             console.error("Error fetching expenses:", error);
             setExpenses([]);
+            setCurrentCorpusFund(0);
         } finally {
             setIsLoading(false);
         }
     }
 
+
+
     // Calculate totalExpenseAmount dynamically
     const totalExpenseAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-    const corpusFundAfterExpenses = initialCorpusFund - totalExpenseAmount;
+    const corpusFundAfterExpenses = currentCorpusFund;
     const monthMaintainanceAmount = totalExpenseAmount / owners.length;
 
 
     return (
         <div>
-            <h4> Month: {selectedMonth + "-" + selectedYear}  & CorpusFund: {initialCorpusFund} </h4>
+            <h4> Month: {selectedMonth + "-" + selectedYear}  & PreviousCorpusFund: {previousCorpusFund} </h4>
             <div>
                 <table className="table table-bordered table-striped">
                     <thead className="table-dark">
@@ -72,16 +85,16 @@ function ViewExpenses(props) {
                     </thead>
                     <tbody>
                         {(() => {
-                            let corpusFund = initialCorpusFund; // Initialize the corpus fund
+                            let tempCorpusFund = previousCorpusFund; // Initialize the corpus fund
                             return expenses.map((expense) => {
-                                const previousCorpusFund = corpusFund;
-                                corpusFund -= expense.amount; // Update the corpus fund
+                                const previousCorpusFund = tempCorpusFund;
+                                tempCorpusFund -= expense.amount; // Update the corpus fund
                                 return (
                                     <tr key={expense._id}>
                                         <td>{expense.name}</td>
                                         <td>{expense.amount}</td>
                                         <td>{previousCorpusFund}</td>
-                                        <td>{corpusFund}</td>
+                                        <td>{tempCorpusFund}</td>
                                     </tr>
                                 );
                             });
@@ -97,7 +110,7 @@ function ViewExpenses(props) {
                         display: 'inline-block',
                     }}
                 >
-                    Corpus Fund After Deducting Total Expenses: {corpusFundAfterExpenses}
+                    CurrentCorpusFund After Deducting Total Expenses: {corpusFundAfterExpenses}
                 </h6>
             </div>
             <div>

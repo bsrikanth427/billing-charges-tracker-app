@@ -1,45 +1,111 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaTrash } from "react-icons/fa";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { AlertHeading } from "react-bootstrap";
 import ConfirmationModal from './ConfirmationModal';
 import { useNavigate } from 'react-router-dom';
+import axios from "axios";
 
-const AddExpenses = () => {
+
+const AddExpenses = (props) => {
+    console.log("addOrEdit", props.addOrEdit);
     let inputExpenses = [
-        { id: 1, name: "WatchmanSalary", amount: 0 },
-        { id: 2, name: "DieselBill", amount: 0 },
-        { id: 3, name: "WaterBill", amount: 0 },
-        { id: 4, name: "PowerBill", amount: 0 },
+        { _id: 1, name: "WatchmanSalary", amount: 0 },
+        { _id: 2, name: "DieselBill", amount: 0 },
+        { _id: 3, name: "WaterBill", amount: 0 },
+        { _id: 4, name: "PowerBill", amount: 0 },
     ];
+    const [expenses, setExpenses] = useState(inputExpenses);
+    const [totalExpenses, setTotalExpenses] = useState(0);
+    const [corpusFund, setCorpusFund] = useState(0);
+    const [selectedMonth, setSelectedMonth] = useState("");
+    const [selectedYear, setSelectedYear] = useState("2024");
+    const [heading, setHeading] = useState("");
+    const [showModal, setShowModal] = useState(false);
+    const navigate = useNavigate(); // React Router hook for navigation
+    const isFromSaveExpensePage = true;
 
     let months = ["January", "Febuary", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "Decemeber"];
 
     let years = ["2024", "2025"]
 
-    const [expenses, setExpenses] = useState(inputExpenses);
-    const [totalExpenses, setTotalExpenses] = useState(0);
-    const [previousMonthCorpusFund, setPreviousMonthCorpusFund] = useState(0);
-    const [currentMonthCorpusFund, setCurrentMonthCorpusFund] = useState(0);
-    const [selectedMonth, setSelectedMonth] = useState("");
-    const [selectedYear, setSelectedYear] = useState("2024");
-    const [showModal, setShowModal] = useState(false);
-    const navigate = useNavigate(); // React Router hook for navigation
-    const isFromSaveExpensePage = true;
+
+
+    useEffect(() => {
+        if (props.addOrEdit === "add") {
+            outstandingBalance();
+            setExpenses(inputExpenses);
+        } else if (props.addOrEdit === "edit") {
+            setExpenses([]);
+        }
+
+    }, [props.addOrEdit])
 
     const handleChangeMonth = (e) => {
-        setSelectedMonth(e.target.value);
+        const newMonth = e.target.value;
+        setSelectedMonth(newMonth);
+        if (props.addOrEdit === "edit") {
+            fetchExpensesByMonth(newMonth, selectedYear);
+        }
     };
+
 
     const handleChangeYear = (e) => {
-        setSelectedYear(e.target.value);
+        const newYear = e.target.value;
+        setSelectedYear(newYear);
+        if (props.addOrEdit === "edit") {
+            fetchExpensesByMonth(selectedMonth, newYear);
+        }
     };
 
-    const handleConfirm = () => {
-        saveExpenses();
+
+
+    async function fetchExpensesByMonth(month = selectedMonth, year = selectedYear) {
+        const monthYear = month + "-" + year;
+        console.log("fetching expenses for month-year: " + monthYear);
+        try {
+            const response = await axios.get("http://localhost:9090/api/expenses/" + monthYear);
+            console.log("fetch expenses response: " + JSON.stringify(response.data.data));
+            const monthlyExpenses = response.data.data.monthlyExpenses || [];
+            setExpenses(monthlyExpenses);
+            const totalCost = monthlyExpenses.reduce((sum, expense) => {
+                return sum + (Number(expense.amount) || 0);
+            }, 0);
+            setCorpusFund(response.data.data.previousCorpusFund)
+            setTotalExpenses(totalCost);
+        } catch (error) {
+            console.error("Error fetching expenses:", error);
+            setExpenses([]);
+        }
+    }
+
+    const outstandingBalance = async () => {
+        try {
+            console.log("fetching outstandingBalance");
+            const response = await fetch('http://localhost:9090/api/funds/balance', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+            });
+            const result = await response.json();
+            if (result) {
+                setCorpusFund(result.data)
+            }
+        } catch (error) {
+            console.error('An error occurred while fetching  the funds balance amount');
+            console.error('Error:', error);
+        }
+    }
+
+    const handleConfirm = async () => {
+        const isSuccess = await saveExpenses();
+        //alert(JSON.stringify(isSuccess));
         setShowModal(false);
-        navigate('/viewExpenses', { state: { selectedMonth, selectedYear, isFromSaveExpensePage } });
+        if (isSuccess) {
+            navigate('/viewExpenses', { state: { selectedMonth, selectedYear, isFromSaveExpensePage } });
+        } else {
+            alert("Save Expenses Failed!!");
+        }
     }
 
     const handleCancel = () => {
@@ -56,7 +122,7 @@ const AddExpenses = () => {
 
     const handleInputAmountChange = (inputExpense, changedAmount) => {
         const changedExpenses = expenses.map((expense) =>
-            inputExpense.id === expense.id
+            inputExpense._id === expense._id
                 ? { ...expense, amount: changedAmount }
                 : expense
         );
@@ -72,7 +138,7 @@ const AddExpenses = () => {
 
     const handleInputExpenseNameChange = (inputExpense, changedExpenseName) => {
         const updatedExpenses = expenses.map((expense) =>
-            expense.id === inputExpense.id
+            expense._id === inputExpense._id
                 ? { ...expense, name: changedExpenseName }
                 : expense
         );
@@ -81,11 +147,11 @@ const AddExpenses = () => {
     };
 
     const handleAddExpense = () => {
-        setExpenses([...expenses, { id: expenses.length + 1, name: "", amount: 0 }]);
+        setExpenses([...expenses, { _id: expenses.length + 1, name: "", amount: 0 }]);
     };
 
     const handleDeleteExpense = (id) => {
-        const updatedExpenses = expenses.filter((expense) => expense.id !== id);
+        const updatedExpenses = expenses.filter((expense) => expense._id !== id);
         setExpenses(updatedExpenses);
 
         const totalCost = updatedExpenses.reduce((sum, expense) => {
@@ -95,20 +161,23 @@ const AddExpenses = () => {
         setTotalExpenses(totalCost);
     };
 
+
     async function saveExpenses() {
+        let isSuccess = false;
         try {
             let requestObj = {
                 monthlyExpenses: expenses,
                 totalMonthExpenses: totalExpenses,
-                previousMonthCorpusFund: previousMonthCorpusFund,
-                currentMonthCorpusFund: currentMonthCorpusFund,
+                corpusFund: corpusFund,
                 monthYear: selectedMonth + "-" + selectedYear
             };
             const requestBody = JSON.stringify(requestObj);
             console.log("expenses requestBody:", requestBody);
 
+            let httpMethod = props.addOrEdit === "edit" ? "PUT" : "POST";
+
             const response = await fetch("http://localhost:9090/api/expenses", {
-                method: "POST",
+                method: httpMethod,
                 headers: {
                     "Content-Type": "application/json",
                 },
@@ -118,15 +187,16 @@ const AddExpenses = () => {
             if (response.ok) {
                 const data = await response.json();
                 console.log("Expenses saved successfully:", data);
-                alert("Expenses saved successfully!");
+                isSuccess = true;
             } else {
                 console.error("Failed to save expenses");
-                alert("Failed to save expenses.");
+                isSuccess = false;
             }
         } catch (error) {
             console.error("Error saving expenses:", error);
-            alert("An error occurred while saving expenses.");
+            isSuccess = false;
         }
+        return isSuccess;
     };
 
 
@@ -135,7 +205,10 @@ const AddExpenses = () => {
         <div className="container mt-4 table-container">
             <div style={{ display: "flex", alignItems: "left", gap: "3rem" }}>
                 <div>
-                    <h2 className="mb-4">Add Expenses</h2>
+                    <h2 className="mb-4">{heading}</h2>
+                </div>
+                <div>
+                    <h2 className="mb-4">CorpusFund: {corpusFund}</h2>
                 </div>
                 <div>
                     <select
@@ -164,8 +237,8 @@ const AddExpenses = () => {
                         <option value="" disabled>
                             Year
                         </option>
-                        {years.map((year, index) => (
-                            <option key={index} value={index}>
+                        {years.map((year) => (
+                            <option key={year} value={year}>
                                 {year}
                             </option>
                         ))}
@@ -182,8 +255,8 @@ const AddExpenses = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {expenses.map((expense) => (
-                        <tr key={expense.id}>
+                    {expenses.map((expense, index) => (
+                        <tr key={index}>
                             <td>
                                 <input
                                     type="text"
@@ -209,7 +282,7 @@ const AddExpenses = () => {
                             <td>
                                 <button
                                     className="btn btn-danger"
-                                    onClick={() => handleDeleteExpense(expense.id)}
+                                    onClick={() => handleDeleteExpense(expense._id)}
                                     title="Delete Expense"
                                 >
                                     <FaTrash />
