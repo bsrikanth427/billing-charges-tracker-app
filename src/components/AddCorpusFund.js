@@ -148,7 +148,7 @@ const AddCorpusFund = () => {
                                     placeholder="Description"
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
-                                    maxLength="10"
+                                    maxLength="100"
                                     required
                                 />
                             </div>

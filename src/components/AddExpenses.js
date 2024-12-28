@@ -20,8 +20,11 @@ const AddExpenses = (props) => {
     const [corpusFund, setCorpusFund] = useState(0);
     const [selectedMonth, setSelectedMonth] = useState("");
     const [selectedYear, setSelectedYear] = useState("2024");
+    const [maintainanceAmountReceived, setMaintainanceAmountReceived] = useState(0);
     const [heading, setHeading] = useState("");
     const [showModal, setShowModal] = useState(false);
+    const [owners, setOwners] = useState([]);
+    const [showOwners, setShowOwners] = useState(false);
     const navigate = useNavigate(); // React Router hook for navigation
     const isFromSaveExpensePage = true;
 
@@ -31,13 +34,15 @@ const AddExpenses = (props) => {
     let years = ["2024", "2025"]
 
 
-
     useEffect(() => {
         if (props.addOrEdit === "add") {
             outstandingBalance();
             setExpenses(inputExpenses);
         } else if (props.addOrEdit === "edit") {
+            setShowOwners(false);
+            setSelectedMonth("");
             setExpenses([]);
+
         }
 
     }, [props.addOrEdit])
@@ -59,7 +64,17 @@ const AddExpenses = (props) => {
         }
     };
 
-
+    const fetchMonthMaintainances = async (monthYear) => {
+        console.log("fetching MonthMaintainances");
+        try {
+            const response = await axios.get("http://localhost:9090/api/monthmaintainance/" + monthYear);
+            console.log('fetch-owner-response:', JSON.stringify(response.data));
+            setOwners(response.data.data.monthMaintainance);
+            setMaintainanceAmountReceived(response.data.data.monthMaintainanceAmountReceived);
+        } catch (error) {
+            console.error("fetch-owner-error:", error);
+        }
+    }
 
     async function fetchExpensesByMonth(month = selectedMonth, year = selectedYear) {
         const monthYear = month + "-" + year;
@@ -74,6 +89,8 @@ const AddExpenses = (props) => {
             }, 0);
             setCorpusFund(response.data.data.previousCorpusFund)
             setTotalExpenses(totalCost);
+            setShowOwners(true);
+            fetchMonthMaintainances(monthYear);
         } catch (error) {
             console.error("Error fetching expenses:", error);
             setExpenses([]);
@@ -199,6 +216,55 @@ const AddExpenses = (props) => {
         return isSuccess;
     };
 
+    async function updateMaintainancePayment(flatNo, status) {
+        const monthYear = selectedMonth + "-" + selectedYear;
+        const totalMonthExpenses = totalExpenses;
+        let monthMaintainanceAmountReceived = maintainanceAmountReceived;
+        const maintainancePerFlat = totalExpenses / owners.length;
+        if (status === "Received") {
+            monthMaintainanceAmountReceived = monthMaintainanceAmountReceived + maintainancePerFlat;
+        } else {
+            monthMaintainanceAmountReceived = monthMaintainanceAmountReceived - maintainancePerFlat
+        }
+        let updatedOwners = owners.map(owner => {
+            let monthMaintainance = {
+                flatNo: owner.flatNo,
+                amount: maintainancePerFlat
+            }
+            monthMaintainance.status = owner.flatNo === flatNo ? status : owner.status;
+            return monthMaintainance;
+        });
+        console.log("updatedOwners:", JSON.stringify(updatedOwners));
+        const requestBody = { monthYear, monthMaintainance: updatedOwners, totalMonthExpenses, monthMaintainanceAmountReceived }
+        await handleSaveMaintainance(requestBody);
+        await fetchMonthMaintainances(monthYear);
+    }
+
+    async function handleSaveMaintainance(requestBody) {
+        try {
+            console.log("saveMaintainance-payload:", JSON.stringify(requestBody));
+            const payload = JSON.stringify(requestBody);
+            const response = await fetch("http://localhost:9090/api/monthmaintainance", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: payload,
+            });
+            if (response.ok) {
+                const data = await response.json();
+                console.log("MonthMaintainance saved successfully:", data);
+                alert("MonthMaintainance saved successfully");
+            } else {
+                console.error("Failed to save MonthMaintainance");
+                alert("Failed to save MonthMaintainance");
+            }
+        } catch (error) {
+            console.error("Error saving MonthMaintainance:", error);
+            alert("Error saving MonthMaintainance");
+        }
+    }
+
 
 
     return (
@@ -306,7 +372,7 @@ const AddExpenses = (props) => {
                 </div>
             </div>
             <div className="mt-3">
-                <h5>Total Cost: {totalExpenses}</h5>
+                <h5>Total Expenses: {totalExpenses}</h5>
             </div>
             {showModal && (
                 <ConfirmationModal
@@ -316,6 +382,49 @@ const AddExpenses = (props) => {
                     onCancel={handleCancel}
                 />
             )}
+
+            {(props.addOrEdit === "edit" && showOwners == true) && (
+                <div>
+                    <h5>Total Maintainance Received: {maintainanceAmountReceived}</h5>
+                    <table className="table table-bordered table-striped">
+                        <thead className="table-dark">
+                            <tr>
+                                <th>FlatNo</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {
+                                owners.map(owner => (
+                                    <tr key={owner._id}>
+                                        <td>{owner.flatNo}</td>
+                                        <td>{totalExpenses / owners.length}</td>
+                                        <td>
+                                            <select
+                                                value={owner.status}
+                                                onChange={(e) => updateMaintainancePayment(owner.flatNo, e.target.value)}
+                                                required
+                                            >
+                                                <option value="Pending">Pending</option>
+                                                <option value="Received">Received</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                ))
+                            }
+                        </tbody>
+                    </table>
+                    <div>
+                        <button className="btn btn-primary saveBtn mt-3" onClick={handleSaveMaintainance}>
+                            Save Maintainance
+                        </button>
+                    </div>
+                </div>
+
+
+            )}
+
         </div >
     );
 };
