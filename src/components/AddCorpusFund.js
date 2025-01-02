@@ -69,7 +69,6 @@ const AddCorpusFund = () => {
             outstandingBalance: fundBalanceAmount
         }
         console.log("request-paylaod for save funds", JSON.stringify(corpusFund));
-        alert(JSON.stringify(corpusFund));
         try {
             const response = await fetch('http://localhost:9090/api/funds', {
                 method: 'POST',
@@ -87,7 +86,7 @@ const AddCorpusFund = () => {
                 outstandingBalance();
 
                 // Redirect to the ViewOwners page after success
-                //navigate('/viewfunds');
+                navigate('/viewfunds');
 
             } else {
                 setMessage(result.data || 'Failed to add funds.');

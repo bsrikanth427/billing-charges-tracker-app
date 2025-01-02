@@ -8,7 +8,6 @@ import EditExpenses from "./components/EditExpenses";
 import ViewAllExpenses from "./components/ViewAllExpenses";
 import ViewExpenses from "./components/ViewExpenses";
 import ViewFunds from "./components/ViewFunds";
-import Register from "./components/Register"
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 
@@ -79,7 +78,6 @@ function App() {
         <div className="container mt-4">
           <Routes>
             <Route path="/addExpenses" element={<AddExpenses addOrEdit="add" />} />
-            <Route path="/register" element={<Register />} />
             <Route path="/addCorpusFund" element={<AddCorpusFund />} />
             <Route path="/addOwner" element={<AddOwner />} />
             <Route path="/viewOwners" element={<ViewOwners />} />
