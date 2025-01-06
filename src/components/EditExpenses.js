@@ -15,7 +15,8 @@ function EditExpenses() {
     const fetchOwners = async () => {
         console.log("fetching owners");
         try {
-            const response = await axios.get("http://localhost:9090/api/owners");
+            const apiUrl = `${process.env.REACT_APP_API_URL}` + "/owners";
+            const response = await axios.get(apiUrl);
             console.log('fetch-owner-response:', JSON.stringify(response.data));
             setOwners(response.data.data);
         } catch (error) {

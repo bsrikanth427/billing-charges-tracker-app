@@ -18,7 +18,8 @@ const ViewOwners = () => {
     const fetchOwners = async () => {
         try {
             setLoading(true);
-            const response = await axios.get("http://localhost:9090/api/owners");
+            const apiUrl = `${process.env.REACT_APP_API_URL}` + "/owners";
+            const response = await axios.get(apiUrl);
             setOwners(response.data.data);
         } catch (err) {
             setError("Failed to fetch owners data");
@@ -47,8 +48,8 @@ const ViewOwners = () => {
 
     const handleUpdate = async () => {
         try {
-            const api = `http://localhost:9090/api/owners/${currentOwner.ownerId}`;
-            const updatedResponse = await axios.put(api, currentOwner);
+            const apiUrl = `${process.env.REACT_APP_API_URL}` + "/owners/" + currentOwner.ownerId;
+            const updatedResponse = await axios.put(apiUrl, currentOwner);
             setMessage(updatedResponse.data.message);
             setOwners((prevOwners) =>
                 prevOwners.map((owner) =>
@@ -65,7 +66,8 @@ const ViewOwners = () => {
         if (!window.confirm("Are you sure you want to delete this owner?")) return;
 
         try {
-            const response = await axios.delete(`http://localhost:9090/api/owners/${ownerId}`);
+            const apiUrl = `${process.env.REACT_APP_API_URL}` + "/owners/" + ownerId;;
+            const response = await axios.delete(apiUrl);
             setOwners((prevOwners) => prevOwners.filter((owner) => owner.ownerId !== ownerId));
             setMessage(response.data.message || "Owner deleted successfully.");
         } catch (error) {

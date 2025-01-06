@@ -12,12 +12,24 @@ const ViewFunds = () => {
     const fetchAllFunds = async () => {
         try {
             console.log("fetch-all-funds request");
-            const response = await axios.get("http://localhost:9090/api/funds");
+            const apiUrl = `${process.env.REACT_APP_API_URL}` + "/funds"
+            const response = await axios.get(apiUrl);
             if (response) {
                 console.log("funds Response: ", JSON.stringify(response));
-                const fundsResponse = response.data.data[0];
-                setFinalBalance(fundsResponse.outstandingBalance);
-                setFundsData(response.data.data);
+                const funds = response.data.data;
+                setFundsData(funds);
+                const sum = 0;
+                const finalBalance = funds.reduce((sum, fund) => {
+                    if (fund.type === "CREDIT") {
+                        console.log("sum+: ", sum + fund.amount);
+                        return sum + fund.amount;
+                    } else {
+                        console.log("sum-: ", sum - fund.amount);
+                        return sum - fund.amount;
+                    }
+                }, 0);
+
+                setFinalBalance(finalBalance);
             } else {
                 console.error("Funds not found");
                 throw new Error("funds not found");

@@ -18,6 +18,7 @@ const AddExpenses = (props) => {
     const [expenses, setExpenses] = useState(inputExpenses);
     const [totalExpenses, setTotalExpenses] = useState(0);
     const [corpusFund, setCorpusFund] = useState(0);
+    const [prevCorpusFund, setPrevCorpusFund] = useState(0);
     const [selectedMonth, setSelectedMonth] = useState("");
     const [selectedYear, setSelectedYear] = useState("2024");
     const [maintainanceAmountReceived, setMaintainanceAmountReceived] = useState(0);
@@ -35,8 +36,8 @@ const AddExpenses = (props) => {
 
 
     useEffect(() => {
+        outstandingBalance();
         if (props.addOrEdit === "add") {
-            outstandingBalance();
             setExpenses(inputExpenses);
         } else if (props.addOrEdit === "edit") {
             setShowOwners(false);
@@ -67,7 +68,8 @@ const AddExpenses = (props) => {
     const fetchMonthMaintainances = async (monthYear) => {
         console.log("fetching MonthMaintainances");
         try {
-            const response = await axios.get("http://localhost:9090/api/monthmaintainance/" + monthYear);
+            const apiUrl = `${process.env.REACT_APP_API_URL}` + "/monthmaintainance/" + monthYear;
+            const response = await axios.get(apiUrl);
             console.log('fetch-owner-response:', JSON.stringify(response.data));
             setOwners(response.data.data.monthMaintainance);
             setMaintainanceAmountReceived(response.data.data.monthMaintainanceAmountReceived);
@@ -80,14 +82,15 @@ const AddExpenses = (props) => {
         const monthYear = month + "-" + year;
         console.log("fetching expenses for month-year: " + monthYear);
         try {
-            const response = await axios.get("http://localhost:9090/api/expenses/" + monthYear);
+            const apiUrl = `${process.env.REACT_APP_API_URL}` + "/expenses/" + monthYear;
+            const response = await axios.get(apiUrl);
             console.log("fetch expenses response: " + JSON.stringify(response.data.data));
             const monthlyExpenses = response.data.data.monthlyExpenses || [];
             setExpenses(monthlyExpenses);
             const totalCost = monthlyExpenses.reduce((sum, expense) => {
                 return sum + (Number(expense.amount) || 0);
             }, 0);
-            setCorpusFund(response.data.data.previousCorpusFund)
+            setPrevCorpusFund(response.data.data.previousCorpusFund)
             setTotalExpenses(totalCost);
             setShowOwners(true);
             fetchMonthMaintainances(monthYear);
@@ -99,8 +102,9 @@ const AddExpenses = (props) => {
 
     const outstandingBalance = async () => {
         try {
+            const apiUrl = `${process.env.REACT_APP_API_URL}` + "/funds/balance";
             console.log("fetching outstandingBalance");
-            const response = await fetch('http://localhost:9090/api/funds/balance', {
+            const response = await fetch(apiUrl, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
             });
@@ -193,7 +197,9 @@ const AddExpenses = (props) => {
 
             let httpMethod = props.addOrEdit === "edit" ? "PUT" : "POST";
 
-            const response = await fetch("http://localhost:9090/api/expenses", {
+            const apiUrl = `${process.env.REACT_APP_API_URL}` + "/expenses";
+
+            const response = await fetch(apiUrl, {
                 method: httpMethod,
                 headers: {
                     "Content-Type": "application/json",
@@ -235,16 +241,24 @@ const AddExpenses = (props) => {
             return monthMaintainance;
         });
         console.log("updatedOwners:", JSON.stringify(updatedOwners));
-        const requestBody = { monthYear, monthMaintainance: updatedOwners, totalMonthExpenses, monthMaintainanceAmountReceived }
+        const requestBody = {
+            monthYear,
+            monthMaintainance: updatedOwners,
+            totalMonthExpenses,
+            monthMaintainanceAmountReceived,
+            maintainancePerFlat
+        }
         await handleSaveMaintainance(requestBody);
         await fetchMonthMaintainances(monthYear);
+        outstandingBalance()
     }
 
     async function handleSaveMaintainance(requestBody) {
         try {
             console.log("saveMaintainance-payload:", JSON.stringify(requestBody));
             const payload = JSON.stringify(requestBody);
-            const response = await fetch("http://localhost:9090/api/monthmaintainance", {
+            const apiUrl = `${process.env.REACT_APP_API_URL}` + "/monthmaintainance";
+            const response = await fetch(apiUrl, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -274,7 +288,11 @@ const AddExpenses = (props) => {
                     <h2 className="mb-4">{heading}</h2>
                 </div>
                 <div>
-                    <h2 className="mb-4">CorpusFund: {corpusFund}</h2>
+                    {(props.addOrEdit === "edit") ? (
+                        <h2 className="mb-4">PrevCorpusFund: {prevCorpusFund}</h2>
+                    ) : (props.addOrEdit === "add") && (
+                        <h2 className="mb-4">CorpusFund: {corpusFund}</h2>
+                    )}
                 </div>
                 <div>
                     <select
@@ -374,56 +392,61 @@ const AddExpenses = (props) => {
             <div className="mt-3">
                 <h5>Total Expenses: {totalExpenses}</h5>
             </div>
-            {showModal && (
-                <ConfirmationModal
-                    title="Save Confirmation"
-                    message={`Expenses for ${months[selectedMonth - 1]} will be saved.`}
-                    onConfirm={handleConfirm}
-                    onCancel={handleCancel}
-                />
-            )}
+            {
+                showModal && (
+                    <ConfirmationModal
+                        title="Save Confirmation"
+                        message={`Expenses for ${months[selectedMonth - 1]} will be saved.`}
+                        onConfirm={handleConfirm}
+                        onCancel={handleCancel}
+                    />
+                )
+            }
 
-            {(props.addOrEdit === "edit" && showOwners == true) && (
-                <div>
-                    <h5>Total Maintainance Received: {maintainanceAmountReceived}</h5>
-                    <table className="table table-bordered table-striped">
-                        <thead className="table-dark">
-                            <tr>
-                                <th>FlatNo</th>
-                                <th>Amount</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {
-                                owners.map(owner => (
-                                    <tr key={owner._id}>
-                                        <td>{owner.flatNo}</td>
-                                        <td>{totalExpenses / owners.length}</td>
-                                        <td>
-                                            <select
-                                                value={owner.status}
-                                                onChange={(e) => updateMaintainancePayment(owner.flatNo, e.target.value)}
-                                                required
-                                            >
-                                                <option value="Pending">Pending</option>
-                                                <option value="Received">Received</option>
-                                            </select>
-                                        </td>
-                                    </tr>
-                                ))
-                            }
-                        </tbody>
-                    </table>
+            {
+                (props.addOrEdit === "edit" && showOwners == true) && (
                     <div>
-                        <button className="btn btn-primary saveBtn mt-3" onClick={handleSaveMaintainance}>
-                            Save Maintainance
-                        </button>
+                        <h5>Total Maintainance Received: {maintainanceAmountReceived}</h5>
+                        <h5>CurrentCorpusFund {corpusFund}</h5>
+                        <table className="table table-bordered table-striped">
+                            <thead className="table-dark">
+                                <tr>
+                                    <th>FlatNo</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {
+                                    owners.map(owner => (
+                                        <tr key={owner._id}>
+                                            <td>{owner.flatNo}</td>
+                                            <td>{totalExpenses / owners.length}</td>
+                                            <td>
+                                                <select
+                                                    value={owner.status}
+                                                    onChange={(e) => updateMaintainancePayment(owner.flatNo, e.target.value)}
+                                                    required
+                                                >
+                                                    <option value="Pending">Pending</option>
+                                                    <option value="Received">Received</option>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                    ))
+                                }
+                            </tbody>
+                        </table>
+                        <div>
+                            <button className="btn btn-primary saveBtn mt-3" onClick={handleSaveMaintainance}>
+                                Save Maintainance
+                            </button>
+                        </div>
                     </div>
-                </div>
 
 
-            )}
+                )
+            }
 
         </div >
     );

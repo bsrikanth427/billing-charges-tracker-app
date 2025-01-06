@@ -31,7 +31,8 @@ const AddOwner = () => {
         setIsSubmitting(true);
 
         try {
-            const response = await fetch('http://localhost:9090/api/owners', {
+            const apiUrl = `${process.env.REACT_APP_API_URL}` + "/owners";
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newUser),

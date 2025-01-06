@@ -5,6 +5,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { useNavigate } from 'react-router-dom';
 
 
+
 const AddCorpusFund = () => {
 
     const fundsArr = { "id": 1, "name": "", "amount": 0, "type": "CREDIT", "description": "" }
@@ -42,7 +43,9 @@ const AddCorpusFund = () => {
     const outstandingBalance = async () => {
         try {
             console.log("fetching outstandingBalance");
-            const response = await fetch('http://localhost:9090/api/funds/balance', {
+            const apiUrl = `${process.env.REACT_APP_API_URL}` + "/funds/balance";
+            console.log("api url: ", apiUrl);
+            const response = await fetch(apiUrl, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
             });
@@ -70,7 +73,8 @@ const AddCorpusFund = () => {
         }
         console.log("request-paylaod for save funds", JSON.stringify(corpusFund));
         try {
-            const response = await fetch('http://localhost:9090/api/funds', {
+            const apiUrl = `${process.env.REACT_APP_API_URL}` + "/funds";
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(corpusFund),
