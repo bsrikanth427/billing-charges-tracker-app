@@ -22,7 +22,6 @@ const AddExpenses = (props) => {
     const [selectedMonth, setSelectedMonth] = useState("");
     const [selectedYear, setSelectedYear] = useState("2024");
     const [maintainanceAmountReceived, setMaintainanceAmountReceived] = useState(0);
-    const [heading, setHeading] = useState("");
     const [showModal, setShowModal] = useState(false);
     const [owners, setOwners] = useState([]);
     const [showOwners, setShowOwners] = useState(false);
@@ -283,18 +282,15 @@ const AddExpenses = (props) => {
 
     return (
         <div className="container mt-4 table-container">
-            <div style={{ display: "flex", alignItems: "left", gap: "3rem" }}>
-                <div>
-                    <h2 className="mb-4">{heading}</h2>
-                </div>
-                <div>
+            <div className="row">
+                <div className="col-12 col-md-6 col-lg-4 mb-3">
                     {(props.addOrEdit === "edit") ? (
-                        <h2 className="mb-4">PrevCorpusFund: {prevCorpusFund}</h2>
+                        <h2>PrevCorpusFund: {prevCorpusFund}</h2>
                     ) : (props.addOrEdit === "add") && (
-                        <h2 className="mb-4">CorpusFund: {corpusFund}</h2>
+                        <h2>CorpusFund: {corpusFund}</h2>
                     )}
                 </div>
-                <div>
+                <div className="col-12 col-md-6 col-lg-2 mb-3">
                     <select
                         className="form-control"
                         value={selectedMonth}
@@ -311,7 +307,7 @@ const AddExpenses = (props) => {
                         ))}
                     </select>
                 </div>
-                <div>
+                <div className="col-12 col-md-6 col-lg-2 mb-3">
                     <select
                         className="form-control"
                         value={selectedYear}
@@ -329,6 +325,7 @@ const AddExpenses = (props) => {
                     </select>
                 </div>
             </div>
+
 
             <table className="table table-bordered table-striped text-center">
                 <thead className="thead-dark">
