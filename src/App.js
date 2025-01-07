@@ -9,6 +9,7 @@ import ViewAllExpenses from "./components/ViewAllExpenses";
 import ViewExpenses from "./components/ViewExpenses";
 import ViewFunds from "./components/ViewFunds";
 import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap/dist/js/bootstrap.bundle.min.js"; // Importing Bootstrap JavaScript
 import "./App.css";
 
 function App() {
@@ -17,7 +18,7 @@ function App() {
       <div>
         {/* Navigation Bar */}
         <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
-          <div className="container">
+          <div className="container-fluid">
             <Link to="/" className="navbar-brand">
               Elite Towers
             </Link>
