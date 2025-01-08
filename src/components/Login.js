@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useNavigate } from 'react-router-dom';
+import { useContext } from "react";
+import UserContext from "../context/UserContext";
 
 function Login() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [message, setMessage] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const { loginUser } = useContext(UserContext);
+
 
     const navigate = useNavigate();
 
@@ -27,7 +31,7 @@ function Login() {
             return;
         }
 
-        const loginUser = { username, password };
+        const user = { username, password };
         setIsSubmitting(true);
 
         try {
@@ -35,14 +39,14 @@ function Login() {
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(loginUser),
+                body: JSON.stringify(user),
             });
 
             const result = await response.json();
 
             if (response.ok) {
-                // Save token or session information if needed
                 console.log('Login successful:', result.data);
+                loginUser(result.data); // Update context and localStorage
 
                 // Navigate based on user role (assumed from API response)
                 if (result.data.role === 'Admin') {
