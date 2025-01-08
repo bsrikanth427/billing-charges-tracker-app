@@ -8,6 +8,9 @@ import EditExpenses from "./components/EditExpenses";
 import ViewAllExpenses from "./components/ViewAllExpenses";
 import ViewExpenses from "./components/ViewExpenses";
 import ViewFunds from "./components/ViewFunds";
+import AddUser from "./components/AddUser";
+import ViewUser from "./components/ViewUser";
+import Login from "./components/Login";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js"; // Importing Bootstrap JavaScript
 import "./App.css";
@@ -87,6 +90,11 @@ function App() {
                     View Corpus Funds
                   </Link>
                 </li>
+                <li className="nav-item">
+                  <Link to="/addUser" className="nav-link" onClick={closeNavbar}>
+                    Add User
+                  </Link>
+                </li>
               </ul>
             </div>
           </div>
@@ -103,6 +111,10 @@ function App() {
             <Route path="/viewExpenses" element={<ViewExpenses />} />
             <Route path="/viewAllExpenses" element={<ViewAllExpenses />} />
             <Route path="/viewfunds" element={<ViewFunds />} />
+            <Route path="/addUser" element={<AddUser />} />
+            <Route path="/viewUser" element={<ViewUser />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<Login />} />
           </Routes>
         </div>
       </div>
