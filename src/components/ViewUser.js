@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { FaTrash } from "react-icons/fa";
 import axios from "axios";
+import { useContext } from "react";
+import UserContext from "../context/UserContext";
 
 function ViewUser() {
     const [users, setUsers] = useState([]);
@@ -10,6 +12,7 @@ function ViewUser() {
     const [error, setError] = useState(null);
     const [editUser, setEditUser] = useState(null); // State to track user being edited
     const [showModal, setShowModal] = useState(false); // Modal visibility
+    const { user, setUser } = useContext(UserContext);
 
     useEffect(() => {
         fetchUsers();
@@ -28,13 +31,21 @@ function ViewUser() {
         }
     };
 
-    const handleEdit = (user) => {
-        setEditUser(user); // Set the user to be edited
+    const handleEdit = (inputUser) => {
+        if (user && user.role === "User") {
+            alert("Admin can only edit user");
+            return;
+        }
+        setEditUser(inputUser); // Set the user to be edited
         setShowModal(true); // Show the modal
     };
 
     const handleDelete = async (username) => {
         try {
+            if (user && user.role === "User") {
+                alert("Admin can only delete user");
+                return;
+            }
             const apiUrl = `${process.env.REACT_APP_API_URL}` + `/users/${username}`;
             await axios.delete(apiUrl);
             setUsers(users.filter((user) => user.username !== username)); // Remove the user from state

@@ -68,21 +68,10 @@ function Navbar() {
                                         </Link>
                                     </li>
                                     <li className="nav-item">
-                                        <Link to="/viewOwners" className="nav-link" onClick={closeNavbar}>
-                                            View Owners
-                                        </Link>
-                                    </li>
-                                    <li className="nav-item">
                                         <Link to="/addUser" className="nav-link" onClick={closeNavbar}>
                                             Add User
                                         </Link>
                                     </li>
-                                    <li className="nav-item">
-                                        <Link to="/viewUser" className="nav-link" onClick={closeNavbar}>
-                                            View Users
-                                        </Link>
-                                    </li>
-
                                 </>
                             )}
 
@@ -96,7 +85,16 @@ function Navbar() {
                                     View Corpus Funds
                                 </Link>
                             </li>
-
+                            <li className="nav-item">
+                                <Link to="/viewOwners" className="nav-link" onClick={closeNavbar}>
+                                    View Owners
+                                </Link>
+                            </li>
+                            <li className="nav-item">
+                                <Link to="/viewUser" className="nav-link" onClick={closeNavbar}>
+                                    View Users
+                                </Link>
+                            </li>
                             <li className="nav-item">
                                 <Link to="/logout" className="nav-link" onClick={closeNavbar}>
                                     Logout

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { FaTrash } from "react-icons/fa";
 import { Modal, Button, Form } from "react-bootstrap";
 import axios from "axios";
+import { useContext } from "react";
+import UserContext from "../context/UserContext";
 
 const ViewOwners = () => {
     const [owners, setOwners] = useState([]);
@@ -10,6 +12,7 @@ const ViewOwners = () => {
     const [message, setMessage] = useState("");
     const [showModal, setShowModal] = useState(false); // Modal visibility
     const [currentOwner, setCurrentOwner] = useState(null); // Owner being edited
+    const { user, setUser } = useContext(UserContext);
 
     useEffect(() => {
         fetchOwners();
@@ -29,6 +32,10 @@ const ViewOwners = () => {
     };
 
     const handleEditClick = (owner) => {
+        if (user && user.role === "User") {
+            alert("Admin can only edit user");
+            return;
+        }
         setCurrentOwner({ ...owner }); // Populate modal fields with owner data
         setShowModal(true); // Show modal
     };
@@ -63,6 +70,10 @@ const ViewOwners = () => {
     };
 
     const handleDelete = async (ownerId) => {
+        if (user && user.role === "User") {
+            alert("Admin can only delete user");
+            return;
+        }
         if (!window.confirm("Are you sure you want to delete this owner?")) return;
 
         try {
