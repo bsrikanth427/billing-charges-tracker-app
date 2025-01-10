@@ -22,9 +22,9 @@ function ViewAllExpenses() {
 
 
     return (
-        <div>
-            <h1>View All Expenses</h1>
-            <div style={{ display: "flex", alignItems: "left", gap: "3rem" }}>
+        <div style={{ "margin": "50px" }}>
+            <h4>View Expenses</h4>
+            <div style={{ display: "flex", alignItems: "left", gap: "3rem", "margin-top": "20px" }}>
                 <div>
                     <select
                         className="form-control"
@@ -62,10 +62,12 @@ function ViewAllExpenses() {
 
             </div>
 
-            {viewBtnClicked && (
-                <ViewExpenses selectedMonth={selectedMonth} selectedYear={selectedYear} />
-            )}
-        </div>
+            {
+                viewBtnClicked && (
+                    <ViewExpenses selectedMonth={selectedMonth} selectedYear={selectedYear} />
+                )
+            }
+        </div >
     );
 }
 

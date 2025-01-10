@@ -73,10 +73,11 @@ function ViewExpenses(props) {
 
 
     return (
-        <div>
+        <div style={{ "margin-top": "20px" }}>
             <h4> Month: {selectedMonth + "-" + selectedYear}  & PreviousCorpusFund: {previousCorpusFund} </h4>
             <div>
-                <table className="table table-bordered table-striped">
+                <table className="table table-bordered table-striped mt-4"
+                    style={{ width: '80%' }}>
                     <thead className="table-dark">
                         <tr>
                             <th>Expense</th>
@@ -116,7 +117,8 @@ function ViewExpenses(props) {
                 </h6>
             </div>
             <div>
-                <table className="table table-bordered table-striped">
+                <table className="table table-bordered table-striped mt-4"
+                    style={{ width: '80%' }}>
                     <thead className="table-dark">
                         <tr>
                             <th>FlatNo</th>
